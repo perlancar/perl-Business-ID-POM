@@ -37,7 +37,11 @@ _
         },
     },
     examples => [
-        {args=>{code=>''}},
+        {args=>{code=>'MD 224510107115'}},
+        {args=>{code=>'DBL9624502804A1'}},
+        {args=>{code=>'NC14191300159'}},
+        {args=>{code=>'TR092699241'}},
+        {args=>{code=>'FF182600791'}},
     ],
 };
 sub parse_pom_reg_code {
@@ -69,8 +73,8 @@ sub parse_pom_reg_code {
 
     } elsif ($res->{category_code} =~ /\A[DG](.?)(.?)\z/) {
 
-        $res->{drug_category_code} = $2;
-        $res->{drug_origin_code} = $3;
+        $res->{drug_category_code} = $1;
+        $res->{drug_origin_code} = $2;
 
         $res->{category_id} = $res->{category_code} =~ /\AD/ ? 'Obat merek dagang (D)' : 'Obat generik (G)';
         if    ($res->{drug_category_code} eq 'B') { $res->{category_id} .= ", bebas (B)" }
