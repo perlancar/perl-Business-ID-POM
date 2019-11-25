@@ -25,7 +25,7 @@ $SPEC{parse_pom_reg_code} = {
     description => <<'_',
 
 This routine does not check whether the code actually exists. Use
-https://cekbpom.pom.go.id/ for that.
+<https://cekbpom.pom.go.id/> for that.
 
 _
     args => {
