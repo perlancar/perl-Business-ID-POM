@@ -25,8 +25,8 @@ $SPEC{parse_pom_reg_code} = {
         'the Indonesian National Agency of Drug and Food Control (POM)',
     description => <<'_',
 
-This routine does not check whether the code actually exists. Use
-<https://cekbpom.pom.go.id/> for that.
+This routine does not check whether the specified code is actually registered.
+Use <https://cekbpom.pom.go.id/> for that.
 
 _
     args => {
