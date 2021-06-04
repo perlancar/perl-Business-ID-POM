@@ -41,7 +41,7 @@ _
         {args=>{code=>'MD 224510107115'}},
         {args=>{code=>'DBL9624502804A1'}},
         {args=>{code=>'NC14191300159'}},
-        {args=>{code=>'TR092699241'}},
+        {args=>{code=>'POM TR092699241'}},
         {args=>{code=>'FF182600791'}},
     ],
 };
@@ -53,6 +53,8 @@ sub parse_pom_reg_code {
 
     $code = uc($code);
     $code =~ s/[^0-9A-Z]+//g;
+
+    $code =~ s/^POM//;
 
     $code =~ /\A([A-Z]+)([0-9A-Z]+)\z/
         or return [400, "Invalid syntax, code needs to be letters followed by digits/letters"];
