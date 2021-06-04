@@ -1,5 +1,6 @@
 package Business::ID::POM;
 
+# AUTHORITY
 # DATE
 # DIST
 # VERSION
@@ -178,7 +179,11 @@ sub parse_pom_reg_code {
         if    ($res->{trad_company_type_code} == 1) { $res->{trad_company_type_id} = 'pabrik farmasi' }
         elsif ($res->{trad_company_type_code} == 2) { $res->{trad_company_type_id} = 'pabrik jamu' }
         elsif ($res->{trad_company_type_code} == 3) { $res->{trad_company_type_id} = 'perusahaan jamu' }
-        else { return [400, "Invalid traditional medicine company type code ($res->{trad_company_type_code}), valid code is 1/2/3"] }
+        elsif ($res->{trad_company_type_code} == 4) { $res->{trad_company_type_id} = 'pabrik luar negeri' } # not documented, i guessed
+        else {
+            $res->{trad_company_type_id} = '?';
+            log_warn "Unknown traditional medicine company type code ($res->{trad_company_type_code}), known code is 1/2/3/4";
+        }
 
         if    ($res->{trad_packaging_code} == 1) { $res->{trad_packaging_id} = 'rajangan' }
         elsif ($res->{trad_packaging_code} == 2) { $res->{trad_packaging_id} = 'serbuk' }
