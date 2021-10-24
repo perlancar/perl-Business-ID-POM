@@ -1,15 +1,17 @@
 package Business::ID::POM;
 
-# DATE
-# DIST
-# VERSION
-
 use 5.010001;
 use warnings;
 use strict;
 use Log::ger;
 
 use Exporter qw(import);
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
+
 our @EXPORT_OK = qw(parse_pom_reg_code);
 
 our %SPEC;
@@ -24,8 +26,8 @@ $SPEC{parse_pom_reg_code} = {
         'the Indonesian National Agency of Drug and Food Control (POM)',
     description => <<'_',
 
-This routine does not check whether the code actually exists. Use
-<https://cekbpom.pom.go.id/> for that.
+This routine does not check whether the specified code is actually registered.
+Use <https://cekbpom.pom.go.id/> for that.
 
 _
     args => {
@@ -40,8 +42,11 @@ _
         {args=>{code=>'MD 224510107115'}},
         {args=>{code=>'DBL9624502804A1'}},
         {args=>{code=>'NC14191300159'}},
-        {args=>{code=>'TR092699241'}},
+        {args=>{code=>'POM TR092699241'}},
         {args=>{code=>'FF182600791'}},
+        {args=>{code=>'SD181353251'}},
+        {args=>{code=>'SI184509731'}},
+        {args=>{code=>'SL091300431'}},
     ],
 };
 sub parse_pom_reg_code {
@@ -52,6 +57,8 @@ sub parse_pom_reg_code {
 
     $code = uc($code);
     $code =~ s/[^0-9A-Z]+//g;
+
+    $code =~ s/^POM//;
 
     $code =~ /\A([A-Z]+)([0-9A-Z]+)\z/
         or return [400, "Invalid syntax, code needs to be letters followed by digits/letters"];
@@ -138,6 +145,16 @@ sub parse_pom_reg_code {
         elsif ($res->{drug_dosage_form_code} eq '81') { $res->{drug_dosage_form_id} = "tablet dispersi (81)" }
         else { log_warn "Unknown drug dosage form code ($res->{drug_dosage_form_code}), known codes include 01/02/04/10/etc" }
 
+    } elsif ($res->{category_code} =~ /\AS[DIL]\z/) {
+
+        $res->{category_id} =
+            $res->{category_code} eq 'SD' ? 'Suplemen kesehatan (S), dalam negeri (D)' :
+            $res->{category_code} eq 'SI' ? 'Suplemen kesehatan (S), impor (I)' :
+            'Suplemen kesehatan (S), lisensi (L)';
+
+        $res->{number} =~ /\A([0-9]{9})\z/
+            or return [400, "S number needs to be 9-digit number"];
+
     } elsif ($res->{category_code} =~ /\AN(.?)\z/) {
 
         $res->{cosmetic_category_code} = $1;
@@ -178,7 +195,11 @@ sub parse_pom_reg_code {
         if    ($res->{trad_company_type_code} == 1) { $res->{trad_company_type_id} = 'pabrik farmasi' }
         elsif ($res->{trad_company_type_code} == 2) { $res->{trad_company_type_id} = 'pabrik jamu' }
         elsif ($res->{trad_company_type_code} == 3) { $res->{trad_company_type_id} = 'perusahaan jamu' }
-        else { return [400, "Invalid traditional medicine company type code ($res->{trad_company_type_code}), valid code is 1/2/3"] }
+        elsif ($res->{trad_company_type_code} == 4) { $res->{trad_company_type_id} = 'pabrik luar negeri' } # not documented, i guessed
+        else {
+            $res->{trad_company_type_id} = '?';
+            log_warn "Unknown traditional medicine company type code ($res->{trad_company_type_code}), known code is 1/2/3/4";
+        }
 
         if    ($res->{trad_packaging_code} == 1) { $res->{trad_packaging_id} = 'rajangan' }
         elsif ($res->{trad_packaging_code} == 2) { $res->{trad_packaging_id} = 'serbuk' }
@@ -201,6 +222,12 @@ sub parse_pom_reg_code {
         $res->{number} =~ /\A([0-9]{9})\z/
             or return [400, "FF number needs to be 9-digit number"];
 
+    } elsif ($res->{category_code} =~ /\AHT\z/) {
+
+        $res->{category_id} = 'Herbal terstandar (HT)';
+        $res->{number} =~ /\A([0-9]{9})\z/
+            or return [400, "HT number needs to be 9-digit number"];
+
     } else {
 
         return [400, "Unknown category code ($res->{category_code}), known category codes include MD/ML/TR/TI/SD/SI/etc"];
@@ -220,16 +247,14 @@ the Indonesian National Agency of Drug and Food Control (BPOM, Badan Pengawas
 Obat dan Makanan). These codes include:
 
  MD, ML - food
- SI, SD - health supplements
+ SI, SD, SL - health supplements
  NA, NB, NC, ND, NE - cosmetics
- TR, TI - traditional medicine
+ TR, TI, HT, FF - traditional, herbal medicine, & phytopharmaceutical products
  D, G - pharmaceutical products
- FF - phytopharmaceutical products
 
 Not yet included BPOM codes:
 
  CA, CD, CL - cosmetics?
- HT - standardized herbal (herbal terstandar)
 
 Related codes:
 
