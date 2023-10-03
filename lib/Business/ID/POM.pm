@@ -39,6 +39,7 @@ _
         },
     },
     examples => [
+        {args=>{code=>'MD240935001200027'}},
         {args=>{code=>'MD 224510107115'}},
         {args=>{code=>'DBL9624502804A1'}},
         {args=>{code=>'NC14191300159'}},
@@ -69,15 +70,32 @@ sub parse_pom_reg_code {
     if ($res->{category_code} =~ /\AM[DL]\z/) {
 
         $res->{category_id} = $res->{category_code} eq 'MD' ? 'Makanan (M), dalam negeri (D)' : 'Makanan (M), impor (L)';
-        $res->{number} =~ /\A([0-9])([0-9]{3})([0-9]{2})([0-9]{3})([0-9]{3})\z/
-            or return [400, "MD/ML number needs to be 12-digit number"];
+        if (length $res->{number} == 12) {
+            $res->{number} =~ /\A([0-9])([0-9]{3})([0-9]{2})([0-9]{3})([0-9]{3})\z/
+                or return [400, "MD/ML number needs to be 12-digit number"];
 
-        $res->{food_packaging_code} = $1;
-        $res->{food_type_code} = $2;
-        $res->{food_province_code} = $3;
-        $res->{food_company_code} = $4;
-        $res->{food_company_product_code} = $5;
+            $res->{food_is_rba} = 0;
+            $res->{food_packaging_type_code} = $1;
+            $res->{food_type_code} = $2;
+            $res->{food_province_code} = $3;
+            $res->{food_company_code} = $4;
+            $res->{food_company_product_code} = $5;
+        } elsif (length $res->{number} == 15) {
+            $res->{number} =~ /\A([0-9]{1})([0-9]{1})([0-9]{2})([0-9]{2})([0-9]{4})([0-9]{5})\z/
+                or return [400, "MD/ML number needs to be 15-digit number"];
 
+            # this is based on my analysis, can't find official documentation.
+            $res->{food_is_rba} = 1;
+            $res->{food_risk_code} = $1;
+            $res->{food_risk_id} = $1 == 0 ? "MR - Menengah Rendah" : $1 == 1 ? "MT - Menengah Tinggi" : "T - Tinggi";
+            $res->{food_packaging_type_code} = $2;
+            $res->{food_province_code} = $3;
+            $res->{food_type_code} = $4;
+            $res->{food_company_product_code} = $5;
+            $res->{food_company_code} = $6;
+        } else {
+            return [400, "MD/ML number needs to be 12- or 15-digit number"];
+        }
     } elsif ($res->{category_code} =~ /\A[DG](.?)(.?)\z/) {
 
         $res->{drug_category_code} = $1;
